@@ -282,6 +282,28 @@ body.flash { animation: flash 0.5s ease-in-out infinite; }
 <div id="toast"></div>
 
 <!-- TITLE -->
+<div id="ios-splash" style="
+  position:fixed; inset:0; z-index:9999;
+  background:#0a0a0a;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  cursor:pointer;
+">
+  <div style="font-family:'Bebas Neue',sans-serif; font-size:4rem; letter-spacing:8px; color:#c0392b; margin-bottom:1rem;">💀 PUNISHERS</div>
+  <div style="font-family:'Permanent Marker',cursive; font-size:1.2rem; color:#888; margin-bottom:3rem;">everyone deserves a good line to die to</div>
+  <div style="font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:4px; color:#fff;
+    border:2px solid #c0392b; padding:.8rem 2.5rem; animation: pulse-tap 1.2s ease-in-out infinite;">
+    TAP TO BEGIN
+  </div>
+</div>
+
+<style>
+@keyframes pulse-tap {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:0.5; transform:scale(0.97); }
+}
+</style>
+
 <div id="s-title" class="screen show">
   <div class="title-skull">💀</div>
   <div class="gtitle"><span style="color:var(--gold)">PUN</span><span style="color:var(--blood-bright)">ISHERS</span></div>
@@ -1118,6 +1140,22 @@ function showResults(){
 document.addEventListener('DOMContentLoaded',function(){
 
   // Title screen
+  // iOS audio unlock splash
+  var splash = document.getElementById('ios-splash');
+  splash.addEventListener('click', function() {
+    // Force unlock AudioContext with a real user gesture
+    var ac = getAC();
+    var buf = ac.createBuffer(1, 1, 22050);
+    var src = ac.createBufferSource();
+    src.buffer = buf;
+    src.connect(ac.destination);
+    src.start(0);
+    ac.resume().then(function() {
+      splash.style.display = 'none';
+    });
+    splash.style.display = 'none';
+  });
+
   document.getElementById('btn-play').addEventListener('click',function(){ sfxBigClick(); musicStop(); go('s-setup'); });
   document.getElementById('btn-howto').addEventListener('click',function(){ sfxClick(); go('s-rules'); });
 
