@@ -580,6 +580,24 @@ function getAC(){
   return AC;
 }
 
+// iOS Safari requires a user gesture to unlock AudioContext.
+// On first touch we create and play a silent buffer to fully unlock it.
+var iosUnlocked = false;
+function unlockAudio() {
+  if(iosUnlocked) return;
+  iosUnlocked = true;
+  var ac = getAC();
+  var buf = ac.createBuffer(1, 1, 22050);
+  var src = ac.createBufferSource();
+  src.buffer = buf;
+  src.connect(ac.destination);
+  src.start(0);
+  ac.resume().then(function(){ iosUnlocked = true; });
+}
+document.addEventListener('touchstart', unlockAudio, {once: false});
+document.addEventListener('touchend', unlockAudio, {once: false});
+document.addEventListener('click', unlockAudio, {once: false});
+
 // --- Low-level synth helpers ---
 function playTone(freq, type, vol, attack, sustain, decay, when){
   var ac = getAC();
@@ -825,12 +843,20 @@ function playDataUriMp3(src) {
     var binary = atob(b64);
     var bytes = new Uint8Array(binary.length);
     for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    ac.decodeAudioData(bytes.buffer, function(decoded) {
-      var source = ac.createBufferSource();
-      source.buffer = decoded;
-      source.connect(ac.destination);
-      source.start(0);
-    }, function(e) { console.warn('decodeAudioData failed', e); });
+    var buf = bytes.buffer;
+    function doPlay() {
+      ac.decodeAudioData(buf, function(decoded) {
+        var source = ac.createBufferSource();
+        source.buffer = decoded;
+        source.connect(ac.destination);
+        source.start(0);
+      }, function(e) { console.warn('decodeAudioData failed', e); });
+    }
+    if(ac.state === 'suspended') {
+      ac.resume().then(doPlay);
+    } else {
+      doPlay();
+    }
   } catch(e) { console.warn('playDataUriMp3 error', e); }
 }
 
